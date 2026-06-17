@@ -175,7 +175,7 @@ class _PopularRail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final popular = ref.watch(popularRestaurantsProvider);
     return SizedBox(
-      height: 248,
+      height: 284,
       child: popular.when(
         data: (list) => ListView.separated(
           scrollDirection: Axis.horizontal,

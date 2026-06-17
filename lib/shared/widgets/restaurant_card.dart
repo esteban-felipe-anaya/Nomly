@@ -34,9 +34,10 @@ class RestaurantCard extends StatelessWidget {
             children: [
               Stack(
                 children: [
-                  AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: AppNetworkImage(url: restaurant.cover),
+                  AppNetworkImage(
+                    url: restaurant.cover,
+                    height: 150,
+                    width: double.infinity,
                   ),
                   Positioned(
                     top: AppSpacing.xs,
@@ -112,7 +113,7 @@ class RestaurantCardSkeleton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const AspectRatio(aspectRatio: 16 / 9, child: ShimmerBox(radius: 0)),
+            const ShimmerBox(height: 150, radius: 0),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
