@@ -98,7 +98,7 @@ class RestaurantsScreen extends ConsumerWidget {
               crossAxisCount: columns,
               crossAxisSpacing: AppSpacing.md,
               mainAxisSpacing: AppSpacing.md,
-              mainAxisExtent: 268,
+              mainAxisExtent: 286,
             ),
             itemCount: itemCount,
             itemBuilder: builder,

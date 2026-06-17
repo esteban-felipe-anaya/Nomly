@@ -6776,7 +6776,8 @@
       "userId": "usr_01",
       "restaurants": [
         "rst_01",
-        "rst_07"
+        "rst_07",
+        "rst_16"
       ],
       "dishes": [
         "dish_001",
