@@ -9,7 +9,7 @@ import '../../../shared/layout/responsive.dart';
 import '../application/auth_controller.dart';
 
 /// Login screen. On success, resumes the `redirect` target (set by the auth
-/// gate) or falls back to home. Demo: any email/password is accepted.
+/// gate) or falls back to home.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,8 +18,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _email = TextEditingController(text: 'sofia@example.com');
-  final _password = TextEditingController(text: 'password');
+  final _email = TextEditingController();
+  final _password = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _submitting = false;
   bool _obscure = true;
@@ -132,11 +132,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2))
                         : const Text('Sign in'),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text('Demo: any email / password works',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant),
-                      textAlign: TextAlign.center),
                   const SizedBox(height: AppSpacing.lg),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
