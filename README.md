@@ -5,9 +5,9 @@ runs from a single codebase on **iOS, Android, Web, macOS, Windows and Linux**. 
 feels like a real delivery app: browse restaurants, customize dishes, manage a cart, check out,
 and watch your courier move toward you live on a map.
 
-It ships with a runnable **mock REST API** (json-server), a proper **networking + repository
-layer** (no hardcoded data in the UI), **real food photography** everywhere, and every flow
-wired **end-to-end** — including **live order tracking**.
+It talks to the **Nomly Django backend** (in [`backend/`](backend/)) through a proper
+**networking + repository layer** (no hardcoded data in the UI), shows **real food photography**
+everywhere, and wires every flow **end-to-end** — including **live order tracking**.
 
 > Brand seed color: a warm, appetizing orange `#E0531F`, which drives the entire Material 3
 > `ColorScheme` (light, dark and dynamic).
@@ -54,9 +54,10 @@ wired **end-to-end** — including **live order tracking**.
   you left off).
 - **Persistent everything** — favorites (restaurants + dishes), address‑book CRUD, promo codes,
   theme mode, locale, cart and recent searches all survive relaunch.
-- **Real images only** — real Unsplash food photography curated into `db.json` (every URL
-  verified HTTP 200) plus `randomuser.me` courier/profile portraits, loaded via
-  `cached_network_image` with shimmer placeholders. No `picsum`/placeholder generators anywhere.
+- **Real images only** — real Unsplash food photography plus `randomuser.me` courier/profile
+  portraits (served by the backend), loaded via `cached_network_image` with shimmer placeholders.
+  Image values may be absolute URLs or backend-relative `/media/...` paths (resolved against the
+  base URL). No `picsum`/placeholder generators anywhere.
 - **Realistic networking** — a Dio interceptor simulates **300–800 ms latency** and the
   occasional transient error, so loading (shimmer), empty and error states are genuinely
   exercised on every screen.
@@ -90,7 +91,7 @@ lib/
                tracking · orders · favorites · account · notifications
   shared/      reusable widgets (cards, tiles, qty stepper, state views) + adaptive layout
   app.dart · main.dart
-mock-api/      json-server: db.json (real image URLs), server.js, routes.json, generators
+backend/       Nomly Django + DRF backend (PostgreSQL) + Next.js/MUI admin (see backend/README)
 ```
 
 Every screen reads from a repository through Riverpod providers; the UI never talks to Dio
@@ -103,7 +104,7 @@ directly, and there is no hardcoded business data in widgets.
 ### Prerequisites
 
 - Flutter (stable) — developed on **Flutter 3.44 / Dart 3.12**
-- **Node.js 18+** (for the mock API)
+- The **Nomly backend** running (see [`backend/README.md`](backend/README.md) — Django + PostgreSQL)
 
 ### 1. Install & generate code
 
@@ -116,41 +117,31 @@ dart run build_runner build --delete-conflicting-outputs   # freezed / json / re
 > On **Windows**, enable Developer Mode (`start ms-settings:developers`) so Flutter can use
 > symlinks for desktop plugin builds. (Web, `analyze` and `test` don't require it.)
 
-### 2. Run the mock API
+### 2. Start the backend
+
+Follow [`backend/README.md`](backend/README.md): create the Postgres DB, then from `backend/`:
 
 ```bash
-cd mock-api
-npm install
-npm run seed     # (re)generate db.json from the verified image pool (deterministic)
-npm start        # serves http://localhost:3000
+make setup && make migrate && make seed && make run   # Django API at http://localhost:8000
 ```
 
-Useful scripts:
+It seeds 1 user, 3 addresses, 8 cuisines, 21 restaurants (~187 dishes), 4 banners, favorites,
+past orders + 1 live order with a courier, couriers and notifications. Seeded login:
+**`sofia@example.com` / `password`**. Promo codes: **`NOMLY20`**, **`FREESHIP`**, **`TACO10`**.
 
-- `npm run dev` — seed then start in one go.
-- `npm run verify-images` — checks that **every** image URL in `db.json` returns HTTP 200
-  (exits non‑zero if any don't).
+### 3. Point the app at the backend
 
-The API implements the full contract: `POST /auth/login|register`, `GET /auth/me`,
-`/addresses` CRUD, `/cuisines`, `/banners`, `/restaurants` (with `cuisineId, q, minRating,
-priceLevel, freeDelivery, sort, _page, _limit`), `/restaurants/:id`, `/restaurants/:id/menu`,
-`/dishes/:id`, `POST /promo/validate`, `/orders` (+ `:id`, `:id/tracking`), `/favorites`,
-`/notifications`. Seeded with 1 user, 3 addresses, 8 cuisines, 21 restaurants (~187 dishes), 4
-banners, favorites, 5 past orders + 1 active order with courier coordinates, and 6 notifications.
-
-Promo codes to try: **`NOMLY20`** (20% off) · **`FREESHIP`** (free delivery, min $15) ·
-**`TACO10`** (10% off).
-
-### 3. Point the app at the API
-
-The base URL defaults sensibly per platform (`http://localhost:3000`, and `http://10.0.2.2:3000`
-on the Android emulator). Override it for a physical device or a hosted API:
+The base URL is read from a `.env` file at the project root (via `flutter_dotenv`), or a
+`--dart-define` override. Edit [`.env`](.env):
 
 ```bash
-flutter run --dart-define=NOMLY_API_BASE_URL=http://192.168.1.50:3000
+NOMLY_API_BASE_URL=http://localhost:8000      # web / desktop
+# NOMLY_API_BASE_URL=http://10.0.2.2:8000     # Android emulator → host
+# NOMLY_API_BASE_URL=http://<your-LAN-ip>:8000  # physical device
 ```
 
-> Demo sign‑in accepts **any** email/password and returns the seeded user.
+…or override at run time: `flutter run --dart-define=NOMLY_API_BASE_URL=http://localhost:8000`.
+(Restart — not hot-reload — after editing `.env`, since it loads in `main()`.)
 
 ### 4. Run on each platform
 
@@ -197,5 +188,5 @@ mocked Dio adapter.
 - **Live tracking** auto‑advances the order status on a timer and animates the courier along the
   route for the demo (the status timeline + ETA update as it moves).
 - **Payment** is mocked (the card list is illustrative; no real processing), per the brief.
-- Image URLs are real, openly‑hotlinkable Unsplash photos and `randomuser.me` portraits, all
-  HTTP‑200‑verified at authoring time; run `npm run verify-images` to re‑check.
+- Images are real Unsplash photos and `randomuser.me` portraits; new images uploaded via the
+  admin are stored as backend‑relative `/media/...` paths and resolved against the base URL.
