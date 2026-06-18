@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/env/env.dart';
 import 'shimmer_box.dart';
 
 /// Standard image widget for the app. Loads real remote photos through
@@ -22,25 +23,39 @@ class AppNetworkImage extends StatelessWidget {
   final BoxFit fit;
   final BorderRadius? borderRadius;
 
+  /// Resolves stored image values: absolute URLs pass through; server-relative
+  /// media paths ("/media/...") are prefixed with the API base URL.
+  String get _resolved {
+    if (url.isEmpty) return url;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    final base = Env.baseUrl;
+    return url.startsWith('/') ? '$base$url' : '$base/$url';
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    Widget image = CachedNetworkImage(
-      imageUrl: url,
-      width: width,
-      height: height,
-      fit: fit,
-      placeholder: (_, _) =>
-          ShimmerBox(width: width, height: height ?? 120, radius: 0),
-      errorWidget: (_, _, _) => Container(
-        width: width,
-        height: height,
-        color: scheme.surfaceContainerHighest,
-        alignment: Alignment.center,
-        child: Icon(Icons.restaurant_menu,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.5)),
-      ),
-    );
+    Widget fallback() => Container(
+          width: width,
+          height: height,
+          color: scheme.surfaceContainerHighest,
+          alignment: Alignment.center,
+          child: Icon(Icons.restaurant_menu,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.5)),
+        );
+
+    final resolved = _resolved;
+    Widget image = resolved.isEmpty
+        ? fallback()
+        : CachedNetworkImage(
+            imageUrl: resolved,
+            width: width,
+            height: height,
+            fit: fit,
+            placeholder: (_, _) =>
+                ShimmerBox(width: width, height: height ?? 120, radius: 0),
+            errorWidget: (_, _, _) => fallback(),
+          );
     if (borderRadius != null) {
       image = ClipRRect(borderRadius: borderRadius!, child: image);
     }
